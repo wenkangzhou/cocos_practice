@@ -1,0 +1,12 @@
+{
+  "name": "ashes-pass-tactics",
+  "version": "3.8.8",
+  "description": "原创战棋单关垂直切片：第一章 灰烬隘口",
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "self-check": "node tests/logic-self-check.mjs"
+  },
+  "uuid": "c17ad201-8038-45a1-b729-66d7da718435"
+}

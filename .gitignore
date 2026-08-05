@@ -1,0 +1,13 @@
+# Cocos Creator generated output
+/library/
+/temp/
+/local/
+/build/
+/profiles/
+/native/engine/android/**/*/assets
+
+# JavaScript tooling
+node_modules/
+.DS_Store
+.idea/
+.vscode/
