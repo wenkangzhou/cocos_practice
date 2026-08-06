@@ -20,6 +20,9 @@
 Cocos Creator 3.8 的命令行构建以退出码 `36` 表示成功。构建产物位于
 `build/web-desktop/web-desktop/`；该目录已加入 `.gitignore`。
 
+部署到 Vercel 前执行 `npm run prepare:vercel`，脚本会校验并将最新 Web Desktop 构建
+复制到可提交的 `web-dist/`。完整步骤见 [DEPLOYMENT.md](./DEPLOYMENT.md)。
+
 ## 操作
 
 - 点击或触摸未行动的友军，查看单位信息和蓝色移动范围。

@@ -1,34 +1,65 @@
-import { _decorator, Color, Component, director, Graphics, UITransform, Vec3, tween } from 'cc';
+import {
+  _decorator,
+  Button,
+  Color,
+  Component,
+  director,
+  Graphics,
+  Node,
+  Vec3,
+  tween,
+} from 'cc';
 import { PALETTE } from './Palette';
-import { createButton, createLabel, createLayer, createPanel, setPosition } from './UIFactory';
 
-const { ccclass } = _decorator;
+const { ccclass, property } = _decorator;
 
 @ccclass('TitleController')
 export class TitleController extends Component {
+  @property({ type: Node, tooltip: '标题页背景节点' })
+  private background: Node | null = null;
+
+  @property({ type: Node, tooltip: '承载标题、按钮等静态 UI 的容器' })
+  private titleContent: Node | null = null;
+
+  @property({ type: Graphics, tooltip: '标题下方的装饰分隔线' })
+  private rule: Graphics | null = null;
+
+  @property({ type: Button, tooltip: '进入 Chapter01 的开始按钮' })
+  private startButton: Button | null = null;
+
   protected start(): void {
-    this.drawBackdrop();
-    const content = createLayer(this.node, 'TitleContent');
-    const eyebrow = createLabel(content, 'Eyebrow', 'ORIGINAL TACTICAL CHRONICLE', 17, PALETTE.gold, 620, 36);
-    eyebrow.node.setPosition(0, 168);
-    const title = createLabel(content, 'Title', '灰 烬 隘 口', 62, PALETTE.paper, 780, 96);
-    title.isBold = true;
-    title.node.setPosition(0, 82);
-    const rule = setPosition(createPanel(content, 'Rule', 480, 3, PALETTE.gold, PALETTE.transparent, 0), 0, 21);
-    const subtitle = createLabel(content, 'Subtitle', '一支三人小队 · 一条被封锁的山路 · 一个必须击破的出口', 21, PALETTE.muted, 760, 50);
-    subtitle.node.setPosition(0, -25);
-    const start = createButton(content, 'StartGame', '开始游戏', 270, 66, () => director.loadScene('Chapter01'), PALETTE.playerDark);
-    start.node.setPosition(0, -125);
-    const hint = createLabel(content, 'Hint', '鼠标点击 / 手机触摸 · 建议横屏游玩', 16, PALETTE.muted, 520, 35);
-    hint.node.setPosition(0, -190);
-    content.setScale(0.95, 0.95, 1);
-    tween(content).to(0.55, { scale: Vec3.ONE }).start();
-    void rule;
+    if (!this.background || !this.titleContent || !this.rule || !this.startButton) {
+      console.error('[TitleController] Title.scene 的节点引用尚未配置完整。');
+      return;
+    }
+
+    const backdrop = this.background.getComponent(Graphics);
+    if (!backdrop) {
+      console.error('[TitleController] Background 节点缺少 Graphics 组件。');
+      return;
+    }
+
+    this.drawBackdrop(backdrop);
+    this.drawRule(this.rule);
+    this.startButton.node.on(Button.EventType.CLICK, this.enterChapter, this);
+
+    this.titleContent.setScale(0.95, 0.95, 1);
+    tween(this.titleContent).to(0.55, { scale: Vec3.ONE }).start();
   }
 
-  private drawBackdrop(): void {
-    const background = createLayer(this.node, 'Background');
-    const graphics = background.addComponent(Graphics);
+  private enterChapter(): void {
+    director.loadScene('Chapter01');
+  }
+
+  private drawRule(graphics: Graphics): void {
+    graphics.clear();
+    graphics.fillColor = PALETTE.gold;
+    graphics.roundRect(-240, -1.5, 480, 3, 1.5);
+    graphics.fill();
+  }
+
+  private drawBackdrop(graphics: Graphics): void {
+    graphics.clear();
     graphics.fillColor = PALETTE.ink;
     graphics.rect(-640, -360, 1280, 720);
     graphics.fill();
@@ -63,8 +94,5 @@ export class TitleController extends Component {
     graphics.fillColor = PALETTE.goldDark;
     graphics.circle(420, 210, 72);
     graphics.fill();
-
-    const transform = background.getComponent(UITransform);
-    if (transform) transform.setContentSize(1280, 720);
   }
 }
