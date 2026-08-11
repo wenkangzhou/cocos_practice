@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <title>灰烬隘口标题背景</title>
+  <desc>深色天空、两层山脉与右上方暗金色太阳。</desc>
+  <rect width="1280" height="720" fill="#121820" />
+  <path
+    d="M 0 580 L 160 280 L 290 435 L 470 195 L 660 440 L 850 230 L 1060 405 L 1280 150 L 1280 720 L 0 720 Z"
+    fill="#23313A"
+  />
+  <path
+    d="M 0 650 L 220 385 L 430 570 L 680 315 L 900 530 L 1110 300 L 1280 455 L 1280 720 L 0 720 Z"
+    fill="#303E41"
+  />
+  <circle cx="1060" cy="150" r="72" fill="#7B5220" />
+</svg>
