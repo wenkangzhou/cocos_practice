@@ -18,6 +18,8 @@ import {
   setPosition,
 } from './UIFactory';
 
+const DIALOGUE_PANEL_Y = -150;
+
 export interface DebugCallbacks {
   toggleCoordinates(): void;
   toggleIds(): void;
@@ -245,7 +247,7 @@ export class HUDController {
   public showDialogue(lines: DialogueLine[], onComplete: () => void): void {
     clearChildren(this.modalRoot);
     const shade = setPosition(createPanel(this.modalRoot, 'DialogueShade', 1280, 720, new Color(6, 9, 12, 150), PALETTE.transparent, 0), 0, 0);
-    const panel = setPosition(createPanel(shade, 'Dialogue', 1030, 190, PALETTE.inkSoft, PALETTE.gold), 0, -205);
+    const panel = setPosition(createPanel(shade, 'Dialogue', 1030, 190, PALETTE.inkSoft, PALETTE.gold), 0, DIALOGUE_PANEL_Y);
     const speaker = createLabel(panel, 'Speaker', '', 25, PALETTE.gold, 240, 42, 0);
     speaker.isBold = true;
     speaker.node.setPosition(-365, 58);
