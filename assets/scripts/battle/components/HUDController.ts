@@ -75,15 +75,15 @@ export class HUDController {
     this.unitInfo.node.setPosition(0, 155);
     this.unitInfo.overflow = Label.Overflow.SHRINK;
     this.terrainInfo = createLabel(side, 'TerrainInfo', '地形：—', 17, PALETTE.muted, 356, 74, 0);
-    this.terrainInfo.node.setPosition(0, 50);
+    this.terrainInfo.node.setPosition(0, 58);
 
     this.actionRoot = new Node('ActionRoot');
     this.actionRoot.layer = side.layer;
     side.addChild(this.actionRoot);
-    this.actionRoot.setPosition(0, -90);
+    this.actionRoot.setPosition(0, -100);
 
     this.endTurnButton = createButton(side, 'EndTurn', '结束回合', 168, 48, onEndTurn, PALETTE.enemyDark);
-    this.endTurnButton.node.setPosition(0, -242);
+    this.endTurnButton.node.setPosition(0, -250);
 
     this.modalRoot = new Node('ModalRoot');
     this.modalRoot.layer = overlayRoot.layer;
@@ -165,16 +165,14 @@ export class HUDController {
     onCancel: () => void,
   ): void {
     const primary = unit.unitClass === UnitClass.Healer ? '治疗' : '攻击';
-    const panel = this.actionPanel('选择行动', `${unit.displayName} 已到达目的地`, [
+    const subtitle = canUsePrimary
+      ? `${unit.displayName} 已到达目的地`
+      : `${unit.displayName} · 附近没有可${primary}目标`;
+    this.actionPanel('选择行动', subtitle, [
       { text: primary, callback: onPrimary, color: unit.unitClass === UnitClass.Healer ? PALETTE.heal : PALETTE.enemyDark, enabled: canUsePrimary },
       { text: '待机', callback: onWait, color: PALETTE.playerDark },
       { text: '取消移动', callback: onCancel, color: PALETTE.panelLight },
     ]);
-    const primaryButton = panel.children.find((child) => child.name === 'Action_0');
-    if (!canUsePrimary && primaryButton) {
-      const hint = createLabel(panel, 'UnavailableHint', `附近没有可${primary}目标`, 13, PALETTE.muted, 290, 24);
-      hint.node.setPosition(0, -92);
-    }
   }
 
   public clearActionMenu(): void {
@@ -347,14 +345,14 @@ export class HUDController {
     actions: { text: string; callback: () => void; color: Color; enabled?: boolean }[],
   ): Node {
     clearChildren(this.actionRoot);
-    const panel = createPanel(this.actionRoot, 'ActionPanel', 350, 238, PALETTE.inkSoft, PALETTE.goldDark);
+    const panel = createPanel(this.actionRoot, 'ActionPanel', 350, 220, PALETTE.inkSoft, PALETTE.goldDark);
     const heading = createLabel(panel, 'Title', title, 22, PALETTE.gold, 310, 35);
-    heading.node.setPosition(0, 91);
+    heading.node.setPosition(0, 86);
     const hint = createLabel(panel, 'Subtitle', subtitle, 14, PALETTE.muted, 310, 30);
-    hint.node.setPosition(0, 62);
+    hint.node.setPosition(0, 58);
     actions.forEach((action, index) => {
       const button = createButton(panel, `Action_${index}`, action.text, 278, 40, action.callback, action.color);
-      button.node.setPosition(0, 25 - index * 49);
+      button.node.setPosition(0, 20 - index * 49);
       button.setEnabled(action.enabled ?? true);
     });
     return panel;

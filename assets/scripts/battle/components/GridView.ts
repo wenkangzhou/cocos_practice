@@ -56,13 +56,14 @@ export class GridView {
     );
   }
 
-  public showRange(positions: GridPosition[], kind: 'move' | 'attack' | 'heal'): void {
+  public showRange(positions: GridPosition[], kind: 'move' | 'enemyMove' | 'attack' | 'heal'): void {
     this.clearMarkers();
-    const color = kind === 'move'
-      ? PALETTE.moveRange
-      : kind === 'attack'
-        ? PALETTE.attackRange
-        : PALETTE.healRange;
+    const color = {
+      move: PALETTE.moveRange,
+      enemyMove: PALETTE.enemyMoveRange,
+      attack: PALETTE.attackRange,
+      heal: PALETTE.healRange,
+    }[kind];
     for (const position of positions) {
       this.addMarker(position, color, kind);
     }

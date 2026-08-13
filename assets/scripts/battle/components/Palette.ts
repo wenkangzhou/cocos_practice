@@ -23,6 +23,7 @@ export const PALETTE = {
   rockLight: new Color(88, 91, 91, 255),
   exit: new Color(145, 106, 49, 255),
   moveRange: new Color(43, 145, 224, 115),
+  enemyMoveRange: new Color(214, 79, 65, 120),
   attackRange: new Color(221, 62, 55, 135),
   healRange: new Color(50, 205, 128, 135),
   path: new Color(245, 196, 67, 195),

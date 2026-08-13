@@ -27,6 +27,7 @@ import { runLogicSelfCheck } from '../debug/LogicSelfCheck';
 const { ccclass, property } = _decorator;
 
 type TargetMode = 'attack' | 'heal' | undefined;
+const DOUBLE_TAP_INTERVAL_MS = 360;
 
 @ccclass('BattleController')
 export class BattleController extends Component {
@@ -69,6 +70,8 @@ export class BattleController extends Component {
   private coordinatesVisible = false;
   private idsVisible = false;
   private disposed = false;
+  private lastTilePressKey?: string;
+  private lastTilePressAt = 0;
 
   protected onLoad(): void {
     this.resolveSceneReferences();
@@ -137,9 +140,20 @@ export class BattleController extends Component {
     if (this.turn.state !== BattleState.UnitSelected) {
       return;
     }
-    const cell = this.reachable.get(posKey(position));
+    const key = posKey(position);
+    const now = Date.now();
+    const isDoubleTap = this.lastTilePressKey === key
+      && now - this.lastTilePressAt <= DOUBLE_TAP_INTERVAL_MS;
+    this.lastTilePressKey = key;
+    this.lastTilePressAt = now;
+    const cell = this.reachable.get(key);
     if (!cell) {
       this.hud.toast('该格不在可移动范围内');
+      return;
+    }
+    if (isDoubleTap) {
+      this.resetTilePress();
+      void this.confirmMove(cell);
       return;
     }
     this.gridView.showRange(Array.from(this.reachable.values(), (value) => value.position), 'move');
@@ -161,6 +175,9 @@ export class BattleController extends Component {
       return;
     }
     if (unit.faction !== Faction.Player) {
+      if (this.turn.state === BattleState.PlayerIdle || this.turn.state === BattleState.UnitSelected) {
+        this.showEnemyMovementRange(unit);
+      }
       return;
     }
     if (unit.acted) {
@@ -173,6 +190,7 @@ export class BattleController extends Component {
   }
 
   private selectUnit(unit: UnitModel): void {
+    this.resetTilePress();
     if (this.selected && this.selected.id !== unit.id) {
       this.unitViews.get(this.selected.id)?.setSelected(false);
     }
@@ -184,6 +202,17 @@ export class BattleController extends Component {
     this.gridView.showRange(Array.from(this.reachable.values(), (cell) => cell.position), 'move');
     this.showSelectionActions();
     this.hud.showUnit(unit);
+  }
+
+  private showEnemyMovementRange(unit: UnitModel): void {
+    this.clearSelection();
+    this.turn.setState(BattleState.PlayerIdle);
+    const reachable = Pathfinding.reachable(this.grid, unit);
+    this.gridView.showRange(Array.from(reachable.values(), (cell) => cell.position), 'enemyMove');
+    this.hud.showUnit(unit);
+    this.hud.toast(unit.move === 0
+      ? `${unit.displayName} 固守隘口，不会主动移动`
+      : '红色区域：该敌人本回合可移动范围');
   }
 
   private showSelectionActions(): void {
@@ -431,10 +460,16 @@ export class BattleController extends Component {
     this.selected = undefined;
     this.originalPosition = undefined;
     this.targetMode = undefined;
+    this.resetTilePress();
     this.reachable.clear();
     this.gridView?.clearMarkers();
     this.hud?.clearActionMenu();
     this.hud?.clearModal();
+  }
+
+  private resetTilePress(): void {
+    this.lastTilePressKey = undefined;
+    this.lastTilePressAt = 0;
   }
 
   private refreshAllViews(): void {

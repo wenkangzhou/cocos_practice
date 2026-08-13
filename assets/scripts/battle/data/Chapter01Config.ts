@@ -55,7 +55,7 @@ export const CHAPTER_01: ChapterDefinition = {
     },
     {
       id: 'boss-tuo', displayName: '队长·拓崖', faction: Faction.Enemy, unitClass: UnitClass.Captain,
-      level: 4, exp: 0, maxHp: 34, attack: 14, defense: 8, move: 3,
+      level: 4, exp: 0, maxHp: 34, attack: 14, defense: 8, move: 0,
       minRange: 1, maxRange: 1, position: { x: 11, y: 3 }, isBoss: true,
     },
   ],

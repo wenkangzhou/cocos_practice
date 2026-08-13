@@ -49,6 +49,11 @@ assert.equal(costs.get('1,0'), 2, 'forest movement cost');
 assert.equal(costs.has('2,0'), false, 'rock is impassable');
 assert.equal(costs.get('1,1'), 2, 'shortest path uses ground');
 assert.equal(reachable(map, { x: 0, y: 0 }, 3, new Set(['0,1'])).has('0,1'), false, 'occupied stop is illegal');
+assert.deepEqual(
+  [...reachable(map, { x: 0, y: 0 }, 0).keys()],
+  ['0,0'],
+  'zero-move guard stays on its starting tile',
+);
 
 const sword = { attack: 12, defense: 6, minRange: 1, maxRange: 1, position: { x: 0, y: 0 } };
 const archer = { attack: 14, defense: 3, minRange: 2, maxRange: 2, position: { x: 0, y: 0 } };
@@ -71,4 +76,4 @@ if (exp >= 100) {
 }
 assert.deepEqual({ exp, level }, { exp: 31, level: 3 }, 'kill grants a visible level up');
 
-console.log('Ashes Pass logic self-check: 11 assertions passed.');
+console.log('Ashes Pass logic self-check: 12 assertions passed.');
