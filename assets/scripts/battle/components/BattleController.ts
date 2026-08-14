@@ -27,7 +27,7 @@ import { runLogicSelfCheck } from '../debug/LogicSelfCheck';
 const { ccclass, property } = _decorator;
 
 type TargetMode = 'attack' | 'heal' | undefined;
-const DOUBLE_TAP_INTERVAL_MS = 360;
+const DOUBLE_TAP_INTERVAL_MS = 480;
 
 @ccclass('BattleController')
 export class BattleController extends Component {
@@ -70,8 +70,8 @@ export class BattleController extends Component {
   private coordinatesVisible = false;
   private idsVisible = false;
   private disposed = false;
-  private lastTilePressKey?: string;
-  private lastTilePressAt = 0;
+  private lastDestinationPressKey?: string;
+  private lastDestinationPressAt = 0;
 
   protected onLoad(): void {
     this.resolveSceneReferences();
@@ -140,28 +140,7 @@ export class BattleController extends Component {
     if (this.turn.state !== BattleState.UnitSelected) {
       return;
     }
-    const key = posKey(position);
-    const now = Date.now();
-    const isDoubleTap = this.lastTilePressKey === key
-      && now - this.lastTilePressAt <= DOUBLE_TAP_INTERVAL_MS;
-    this.lastTilePressKey = key;
-    this.lastTilePressAt = now;
-    const cell = this.reachable.get(key);
-    if (!cell) {
-      this.hud.toast('该格不在可移动范围内');
-      return;
-    }
-    if (isDoubleTap) {
-      this.resetTilePress();
-      void this.confirmMove(cell);
-      return;
-    }
-    this.gridView.showRange(Array.from(this.reachable.values(), (value) => value.position), 'move');
-    this.gridView.showPath(cell.path);
-    this.hud.showMoveConfirm(position, cell.cost, () => void this.confirmMove(cell), () => {
-      this.gridView.showRange(Array.from(this.reachable.values(), (value) => value.position), 'move');
-      this.showSelectionActions();
-    });
+    this.handleDestinationPress(position);
   }
 
   private onUnitPressed(unit: UnitModel): void {
@@ -184,6 +163,10 @@ export class BattleController extends Component {
       this.hud.toast(`${unit.displayName} 本回合已经行动`);
       return;
     }
+    if (this.turn.state === BattleState.UnitSelected && this.selected?.id === unit.id) {
+      this.handleDestinationPress(unit.position);
+      return;
+    }
     if (this.turn.state === BattleState.PlayerIdle || this.turn.state === BattleState.UnitSelected) {
       this.selectUnit(unit);
     }
@@ -202,6 +185,38 @@ export class BattleController extends Component {
     this.gridView.showRange(Array.from(this.reachable.values(), (cell) => cell.position), 'move');
     this.showSelectionActions();
     this.hud.showUnit(unit);
+    this.rememberDestinationPress(unit.position);
+  }
+
+  private handleDestinationPress(position: GridPosition): void {
+    const key = posKey(position);
+    const cell = this.reachable.get(key);
+    if (!cell) {
+      this.resetTilePress();
+      this.hud.toast('该格不在可移动范围内');
+      return;
+    }
+    const now = Date.now();
+    const isDoubleTap = this.lastDestinationPressKey === key
+      && now - this.lastDestinationPressAt <= DOUBLE_TAP_INTERVAL_MS;
+    if (isDoubleTap) {
+      this.resetTilePress();
+      void this.confirmMove(cell);
+      return;
+    }
+    this.lastDestinationPressKey = key;
+    this.lastDestinationPressAt = now;
+    this.gridView.showRange(Array.from(this.reachable.values(), (value) => value.position), 'move');
+    this.gridView.showPath(cell.path);
+    this.hud.showMoveConfirm(position, cell.cost, () => void this.confirmMove(cell), () => {
+      this.gridView.showRange(Array.from(this.reachable.values(), (value) => value.position), 'move');
+      this.showSelectionActions();
+    });
+  }
+
+  private rememberDestinationPress(position: GridPosition): void {
+    this.lastDestinationPressKey = posKey(position);
+    this.lastDestinationPressAt = Date.now();
   }
 
   private showEnemyMovementRange(unit: UnitModel): void {
@@ -468,8 +483,8 @@ export class BattleController extends Component {
   }
 
   private resetTilePress(): void {
-    this.lastTilePressKey = undefined;
-    this.lastTilePressAt = 0;
+    this.lastDestinationPressKey = undefined;
+    this.lastDestinationPressAt = 0;
   }
 
   private refreshAllViews(): void {

@@ -1,4 +1,4 @@
-import { Color, Label, Node, UIOpacity, Vec3, tween } from 'cc';
+import { Color, Label, Node, Sprite, UIOpacity, Vec3, tween } from 'cc';
 import {
   CombatForecast,
   DialogueLine,
@@ -11,12 +11,14 @@ import { TerrainDefinition } from '../core/BattleTypes';
 import { PALETTE } from './Palette';
 import {
   ButtonHandle,
+  addTransform,
   clearChildren,
   createButton,
   createLabel,
   createPanel,
   setPosition,
 } from './UIFactory';
+import { loadUnitPortrait } from './PortraitAssets';
 
 const DIALOGUE_PANEL_Y = -150;
 
@@ -34,6 +36,8 @@ export class HUDController {
   private readonly turnLabel: Label;
   private readonly objectiveLabel: Label;
   private readonly unitInfo: Label;
+  private readonly unitPortrait: Sprite;
+  private readonly unitPortraitFallback: Label;
   private readonly terrainInfo: Label;
   private readonly actionRoot: Node;
   private readonly modalRoot: Node;
@@ -41,6 +45,7 @@ export class HUDController {
   private readonly debugPanel: Node;
   private readonly toastLabel: Label;
   private endTurnButton: ButtonHandle;
+  private portraitUnitId?: string;
 
   public constructor(
     private readonly hudRoot: Node,
@@ -71,8 +76,25 @@ export class HUDController {
     const side = setPosition(createPanel(hudRoot, 'SidePanel', 410, 566, PALETTE.panel, PALETTE.goldDark), 413, 0);
     const infoTitle = createLabel(side, 'InfoTitle', '战 况', 21, PALETTE.gold, 370, 34);
     infoTitle.node.setPosition(0, 249);
-    this.unitInfo = createLabel(side, 'UnitInfo', '选择一名友军开始行动', 19, PALETTE.paper, 356, 150, 0);
-    this.unitInfo.node.setPosition(0, 155);
+    const portraitFrame = setPosition(createPanel(
+      side,
+      'UnitPortraitFrame',
+      96,
+      96,
+      PALETTE.ink,
+      PALETTE.goldDark,
+      12,
+    ), -136, 158);
+    const portraitNode = new Node('Portrait');
+    portraitNode.layer = side.layer;
+    addTransform(portraitNode, 86, 86);
+    portraitFrame.addChild(portraitNode);
+    this.unitPortrait = portraitNode.addComponent(Sprite);
+    this.unitPortrait.sizeMode = Sprite.SizeMode.CUSTOM;
+    this.unitPortraitFallback = createLabel(portraitFrame, 'Fallback', '—', 30, PALETTE.muted, 80, 80);
+
+    this.unitInfo = createLabel(side, 'UnitInfo', '选择一名友军开始行动', 19, PALETTE.paper, 250, 150, 0);
+    this.unitInfo.node.setPosition(58, 155);
     this.unitInfo.overflow = Label.Overflow.SHRINK;
     this.terrainInfo = createLabel(side, 'TerrainInfo', '地形：—', 17, PALETTE.muted, 356, 74, 0);
     this.terrainInfo.node.setPosition(0, 58);
@@ -118,10 +140,20 @@ export class HUDController {
   }
 
   public showUnit(unit?: UnitModel): void {
+    this.portraitUnitId = unit?.id;
+    this.unitPortrait.spriteFrame = null;
+    this.unitPortraitFallback.node.active = true;
     if (!unit) {
+      this.unitPortraitFallback.string = '—';
       this.unitInfo.string = '选择一名尚未行动的友军\n点击蓝色格子规划移动路径';
       return;
     }
+    this.unitPortraitFallback.string = this.classGlyph(unit);
+    loadUnitPortrait(unit, (spriteFrame) => {
+      if (!spriteFrame || this.portraitUnitId !== unit.id || !this.unitPortrait.node.isValid) return;
+      this.unitPortrait.spriteFrame = spriteFrame;
+      this.unitPortraitFallback.node.active = false;
+    });
     const status = unit.acted ? '已行动' : '可行动';
     const range = unit.unitClass === UnitClass.Healer
       ? '相邻治疗'
@@ -151,8 +183,11 @@ export class HUDController {
     onConfirm: () => void,
     onCancel: () => void,
   ): void {
-    this.actionPanel('确认移动', `目的地 ${position.x},${position.y} · 消耗 ${cost}`, [
-      { text: '移动到此', callback: onConfirm, color: PALETTE.playerDark },
+    const staying = cost === 0;
+    this.actionPanel(staying ? '原地行动' : '确认移动', staying
+      ? '双击当前角色，可直接保持原地'
+      : `目的地 ${position.x},${position.y} · 再点同一格确认`, [
+      { text: staying ? '保持原地' : '移动到此', callback: onConfirm, color: PALETTE.playerDark },
       { text: '返回', callback: onCancel, color: PALETTE.panelLight },
     ]);
   }
@@ -356,6 +391,16 @@ export class HUDController {
       button.setEnabled(action.enabled ?? true);
     });
     return panel;
+  }
+
+  private classGlyph(unit: UnitModel): string {
+    switch (unit.unitClass) {
+      case UnitClass.Archer: return '弓';
+      case UnitClass.Healer: return '愈';
+      case UnitClass.Captain: return '将';
+      case UnitClass.Raider: return '刀';
+      default: return '剑';
+    }
   }
 
   private createDebugPanel(callbacks: DebugCallbacks): Node {

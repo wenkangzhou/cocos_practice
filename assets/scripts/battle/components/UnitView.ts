@@ -1,14 +1,16 @@
-import { EventTouch, Graphics, Label, Node, UIOpacity, UITransform } from 'cc';
+import { EventTouch, Graphics, Label, Node, Sprite, UIOpacity } from 'cc';
 import { Faction, UnitClass, UnitModel } from '../core/BattleTypes';
 import { GridView } from './GridView';
 import { PALETTE } from './Palette';
 import { addTransform, createLabel } from './UIFactory';
+import { loadUnitPortrait } from './PortraitAssets';
 
 export class UnitView {
   public readonly node: Node;
   private readonly graphics: Graphics;
   private readonly hpGraphics: Graphics;
   private readonly idLabel: Label;
+  private readonly glyph: Label;
   private selected = false;
 
   public constructor(
@@ -24,9 +26,17 @@ export class UnitView {
     parent.addChild(this.node);
     this.graphics = this.node.addComponent(Graphics);
 
-    const glyph = createLabel(this.node, 'Glyph', this.classGlyph(), 19, PALETTE.paper, 38, 32);
-    glyph.node.setPosition(0, 5);
-    glyph.isBold = true;
+    const portraitNode = new Node('Portrait');
+    portraitNode.layer = parent.layer;
+    addTransform(portraitNode, 40, 40);
+    portraitNode.setPosition(0, 4);
+    this.node.addChild(portraitNode);
+    const portrait = portraitNode.addComponent(Sprite);
+    portrait.sizeMode = Sprite.SizeMode.CUSTOM;
+
+    this.glyph = createLabel(this.node, 'Glyph', this.classGlyph(), 19, PALETTE.paper, 38, 32);
+    this.glyph.node.setPosition(0, 5);
+    this.glyph.isBold = true;
     const name = createLabel(this.node, 'Name', model.displayName, model.isBoss ? 13 : 12, PALETTE.paper, 76, 20);
     name.node.setPosition(0, 29);
     name.isBold = true;
@@ -44,6 +54,11 @@ export class UnitView {
     this.node.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
       event.propagationStopped = true;
       onPressed(this.model);
+    });
+    loadUnitPortrait(model, (spriteFrame) => {
+      if (!spriteFrame || !this.node.isValid) return;
+      portrait.spriteFrame = spriteFrame;
+      this.glyph.node.active = false;
     });
     this.redraw();
   }
